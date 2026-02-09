@@ -1,7 +1,7 @@
 # JWT Abstraction Site
 
-Landing page for @dax-side/jwt-abstraction.
+Site for [@dax-side/jwt-abstraction](https://www.npmjs.com/package/@dax-side/jwt-abstraction).
 
-Live site: https://dax-side.github.io/jwt-abstraction-site
+[View live site](https://dax-side.github.io/jwt-abstraction-site)
 
 Built with Astro.
