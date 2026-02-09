@@ -1,0 +1,260 @@
+---
+import "../styles/global.css";
+import { codeToHtml } from "shiki";
+
+const npmUrl = "https://www.npmjs.com/package/@dax-side/jwt-abstraction";
+const githubUrl = "https://github.com/dax-side/jwt-abstraction";
+const readmeUrl = "https://github.com/dax-side/jwt-abstraction#readme";
+
+const codeWithout = `import jwt from "jsonwebtoken";
+
+const ACCESS_TTL = "15m";
+const REFRESH_TTL = "7d";
+
+const createTokens = (payload) => ({
+  accessToken: jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: ACCESS_TTL,
+    algorithm: "HS256"
+  }),
+  refreshToken: jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TTL,
+    algorithm: "HS256"
+  })
+});
+
+const verifyToken = (token, secret) => {
+  try {
+    return jwt.verify(token, secret);
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      throw new Error("Token expired");
+    }
+    throw new Error("Invalid token");
+  }
+};
+
+const protect = () => (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Missing token" });
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Token expired" });
+    }
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+const refreshTokens = async (refreshToken) => {
+  const payload = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+  return createTokens({ userId: payload.userId });
+};`;
+
+const codeWith = `import { useJwt } from "@dax-side/jwt-abstraction";
+
+const jwt = useJwt({
+  secret: process.env.JWT_SECRET,
+  refreshTokenSecret: process.env.JWT_REFRESH_SECRET
+});
+
+const tokens = jwt.create({ userId: 123 });
+const payload = await jwt.verify(tokens.accessToken);
+
+app.get("/profile", jwt.protect(), (req, res) => {
+  res.json({ user: req.user });
+});`;
+
+const codeSecurity = `const jwt = useJwt({
+  secret: process.env.JWT_SECRET,
+  refreshTokenSecret: process.env.JWT_REFRESH_SECRET
+});`;
+
+const codeErrors = `import {
+  TokenExpiredError,
+  InvalidTokenError,
+  NoSecretError
+} from "@dax-side/jwt-abstraction";
+
+try {
+  const payload = await jwt.verify(token);
+} catch (error) {
+  if (error instanceof TokenExpiredError) {
+    // Token expired
+  } else if (error instanceof InvalidTokenError) {
+    // Token malformed or tampered with
+  } else if (error instanceof NoSecretError) {
+    // Secret not configured
+  }
+}`;
+
+const codeGetStarted = `npm install @dax-side/jwt-abstraction
+
+JWT_SECRET=your-secret`;
+
+const codeWithoutHtml = await codeToHtml(codeWithout, {
+  lang: "ts",
+  theme: "github-dark"
+});
+
+const codeWithHtml = await codeToHtml(codeWith, {
+  lang: "ts",
+  theme: "github-dark"
+});
+
+const codeSecurityHtml = await codeToHtml(codeSecurity, {
+  lang: "ts",
+  theme: "github-dark"
+});
+
+const codeErrorsHtml = await codeToHtml(codeErrors, {
+  lang: "ts",
+  theme: "github-dark"
+});
+
+const codeGetStartedHtml = await codeToHtml(codeGetStarted, {
+  lang: "bash",
+  theme: "github-dark"
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JWT Abstraction - Less JWT boilerplate</title>
+    <meta
+      name="description"
+      content="JWT auth without the boilerplate. Access and refresh tokens, Express middleware, strict TypeScript, and clear errors. Bring your own secret."
+    />
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <div class="kicker">@dax-side/jwt-abstraction</div>
+        <h1>JWT auth without the boilerplate.</h1>
+        <p>
+          Create access and refresh tokens, verify payloads, and protect routes in three
+          lines. You still provide the secrets.
+        </p>
+        <div class="install-row">
+          <div class="install" id="install-command">npm install @dax-side/jwt-abstraction</div>
+          <button class="copy-button" type="button" data-copy="install-command">
+            Copy
+          </button>
+        </div>
+        <img
+          class="downloads"
+          src="https://img.shields.io/npm/dw/@dax-side/jwt-abstraction"
+          alt="npm weekly downloads"
+        />
+      </header>
+
+      <section>
+        <h2>The problem</h2>
+        <p>JWT auth shows up in every Node.js app. The setup is the same every time:</p>
+        <ul>
+          <li>Wire up jsonwebtoken</li>
+          <li>Configure algorithms and expiries</li>
+          <li>Create access and refresh tokens</li>
+          <li>Build Express middleware</li>
+          <li>Sign, verify, and handle edge cases by hand</li>
+          <li>Map token errors to responses</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Side-by-side comparison</h2>
+        <p>
+          Without the abstraction, you handle signing, verification, refresh flow, and error
+          mapping yourself. That is a lot of code to keep consistent.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="badge">Without jwt-abstraction</div>
+            <div class="code-block" set:html={codeWithoutHtml}></div>
+          </div>
+          <div class="card">
+            <div class="badge">With jwt-abstraction</div>
+            <div class="code-block" set:html={codeWithHtml}></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Features</h2>
+        <ul>
+          <li>Only dependency is jsonwebtoken</li>
+          <li>Creates access and refresh token pairs</li>
+          <li>Separate secrets for access and refresh tokens</li>
+          <li>Express middleware included</li>
+          <li>TypeScript support with strict mode</li>
+          <li>Typed error classes</li>
+          <li>100% test coverage</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Security first</h2>
+        <p>
+          Secrets are required. If you do not provide one, the package throws
+          NoSecretError immediately. There are no default secrets.
+        </p>
+        <div class="code-block" set:html={codeSecurityHtml}></div>
+        <p>Safe defaults:</p>
+        <ul>
+          <li>Access token TTL: 15 minutes</li>
+          <li>Refresh token TTL: 7 days</li>
+          <li>Algorithm: HS256</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Error handling</h2>
+        <p>Catch specific error types instead of parsing strings.</p>
+        <div class="code-block" set:html={codeErrorsHtml}></div>
+      </section>
+
+      <section>
+        <h2>Get started</h2>
+        <p>Install the package, set your secret, and wire it into Express.</p>
+        <div class="code-block" set:html={codeGetStartedHtml}></div>
+        <p>
+          Full documentation is in the
+          <a href={readmeUrl}>README</a>.
+        </p>
+      </section>
+
+      <footer>
+        <p>
+          <a href={npmUrl}>npm</a> · <a href={githubUrl}>GitHub</a> ·
+          <a href={readmeUrl}>Docs</a>
+        </p>
+      </footer>
+    </main>
+    <script>
+      const copyButton = document.querySelector("[data-copy='install-command']");
+      const installCommand = document.querySelector("#install-command");
+
+      if (copyButton && installCommand) {
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(installCommand.textContent ?? "");
+            copyButton.textContent = "Copied";
+            setTimeout(() => {
+              copyButton.textContent = "Copy";
+            }, 1600);
+          } catch (error) {
+            copyButton.textContent = "Failed";
+            setTimeout(() => {
+              copyButton.textContent = "Copy";
+            }, 1600);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
