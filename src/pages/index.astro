@@ -118,6 +118,28 @@ const codeGetStartedHtml = await codeToHtml(codeGetStarted, {
   lang: "bash",
   theme: "github-dark"
 });
+
+let downloadsText = null;
+try {
+  const res = await fetch(
+    "https://api.npmjs.org/downloads/point/last-month/@dax-side/jwt-abstraction"
+  );
+  if (res.ok) {
+    const j = await res.json();
+    const count = typeof j.downloads === "number" ? j.downloads : null;
+    const asOf = j.end || j.start || null;
+    if (count && asOf) {
+      const date = new Date(asOf).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+      downloadsText = `${new Intl.NumberFormat().format(count)} download${count === 1 ? "" : "s"} in the past 30 days. Updated ${date}.`;
+    }
+  }
+} catch (err) {
+  downloadsText = null;
+}
 ---
 
 <!doctype html>
@@ -146,11 +168,14 @@ const codeGetStartedHtml = await codeToHtml(codeGetStarted, {
             Copy
           </button>
         </div>
-        <img
-          class="downloads"
-          src="https://img.shields.io/npm/dw/@dax-side/jwt-abstraction"
-          alt="npm weekly downloads"
-        />
+        <div class="download-meta">
+          <img
+            class="downloads"
+            src="https://img.shields.io/npm/dm/@dax-side/jwt-abstraction"
+            alt="npm monthly downloads"
+          />
+          <div class="download-count">{downloadsText}</div>
+        </div>
       </header>
 
       <section>
